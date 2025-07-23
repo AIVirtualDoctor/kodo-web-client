@@ -1,25 +1,27 @@
-import { Fragment, useState, useEffect } from 'react'
-import { Typography, DialogContent, Slide, IconButton } from '@material-ui/core'
+import { Typography } from '@material-ui/core'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
-import CloseIcon from '@material-ui/icons/Close'
+import { Fragment, useEffect, useState } from 'react'
 
-import Lottie from 'lottie-react'
-import successAnim from '/public/lottiefiles/successAnim.json'
-import swapSuccessAnim from '/public/lottiefiles/swapSuccess.json'
+import dynamic from 'next/dynamic'
 import lockSuccessAnim from '/public/lottiefiles/lockSuccess.json'
 import pairSuccessAnim from '/public/lottiefiles/pairSuccess.json'
+import successAnim from '/public/lottiefiles/successAnim.json'
+import swapSuccessAnim from '/public/lottiefiles/swapSuccess.json'
 
-import Transaction from './transaction'
+// Dynamically import Lottie to prevent SSR issues
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false })
+
 import { Dialog, Transition } from '@headlessui/react'
-import { XMarkIcon, ArrowLongRightIcon } from '@heroicons/react/24/solid'
+import { XMarkIcon } from '@heroicons/react/24/solid'
+import Transaction from './transaction'
 
 // function Transition(props) {
 //   return <Slide direction="up" {...props} />
 // }
 
-import classes from './transactionQueue.module.css'
 import stores from '../../stores'
 import { ACTIONS, ETHERSCAN_URL } from '../../stores/constants'
+import classes from './transactionQueue.module.css'
 
 export default function TransactionQueue({ setQueueLength }) {
   const [open, setOpen] = useState(false)
@@ -27,6 +29,11 @@ export default function TransactionQueue({ setQueueLength }) {
   const [purpose, setPurpose] = useState(null)
   const [type, setType] = useState(null)
   const [action, setAction] = useState(null)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const handleClose = () => {
     setOpen(false)
@@ -155,13 +162,16 @@ export default function TransactionQueue({ setQueueLength }) {
       return null
     }
 
-    let lottie = <Lottie loop={false} className={classes.animClass} animationData={successAnim} />
-    if (type === 'Liquidity') {
-      lottie = <Lottie loop={false} className={classes.animClass} animationData={pairSuccessAnim} />
-    } else if (type === 'Swap') {
-      lottie = <Lottie loop={false} className={classes.animClass} animationData={swapSuccessAnim} />
-    } else if (type === 'Lock') {
-      lottie = <Lottie loop={false} className={classes.animClass} animationData={lockSuccessAnim} />
+    let lottie = null
+    if (isClient) {
+      lottie = <Lottie loop={false} className={classes.animClass} animationData={successAnim} />
+      if (type === 'Liquidity') {
+        lottie = <Lottie loop={false} className={classes.animClass} animationData={pairSuccessAnim} />
+      } else if (type === 'Swap') {
+        lottie = <Lottie loop={false} className={classes.animClass} animationData={swapSuccessAnim} />
+      } else if (type === 'Lock') {
+        lottie = <Lottie loop={false} className={classes.animClass} animationData={lockSuccessAnim} />
+      }
     }
 
     return (

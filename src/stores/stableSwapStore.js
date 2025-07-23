@@ -1,11 +1,10 @@
-import { v4 as uuidv4 } from 'uuid'
-import * as moment from 'moment'
 import BigNumber from 'bignumber.js'
+import * as moment from 'moment'
+import { v4 as uuidv4 } from 'uuid'
 
-import { MAX_UINT256, ZERO_ADDRESS, ACTIONS, CONTRACTS } from './constants'
-import { formatCurrency } from '../utils'
 import stores from '.'
-import { formatAddress } from '../utils'
+import { formatAddress, formatCurrency } from '../utils'
+import { ACTIONS, CONTRACTS, MAX_UINT256, ZERO_ADDRESS } from './constants'
 
 class Store {
   constructor(dispatcher, emitter) {
@@ -6375,12 +6374,14 @@ class Store {
             return this.emitter.emit(ACTIONS.ERROR, err)
           }
 
-          window.setTimeout(() => {
-            this.dispatcher.dispatch({
-              type: ACTIONS.SEARCH_WHITELIST,
-              content: { search: token.address },
-            })
-          }, 2)
+          if (typeof window !== 'undefined') {
+            window.setTimeout(() => {
+              this.dispatcher.dispatch({
+                type: ACTIONS.SEARCH_WHITELIST,
+                content: { search: token.address },
+              })
+            }, 2)
+          }
 
           this.emitter.emit(ACTIONS.WHITELIST_TOKEN_RETURNED)
         }

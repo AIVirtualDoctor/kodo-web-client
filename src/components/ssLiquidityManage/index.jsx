@@ -1,18 +1,17 @@
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/router'
 import BigNumber from 'bignumber.js'
+import { useRouter } from 'next/router'
+import { useEffect, useRef, useState } from 'react'
 import { formatCurrency } from '../../utils'
 
+import { AdjustmentsHorizontalIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
+import { ArrowDownIcon, ArrowLeftIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid'
 import stores from '../../stores'
 import { ACTIONS, CONTRACTS } from '../../stores/constants'
-import { ArrowLeftIcon, ArrowDownIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid'
-import { Cog6ToothIcon, InformationCircleIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline'
 
-import { Tab, Popover } from '@headlessui/react'
+import { Popover, Tab } from '@headlessui/react'
 
-import { Tooltip } from 'react-tooltip'
 import { usePopper } from 'react-popper'
-import Image from 'next/image'
+import { Tooltip } from 'react-tooltip'
 
 const PageHeader = ({ pair }) => {
   const router = useRouter()
@@ -1970,7 +1969,7 @@ export default function LiquidityManage() {
                     onClick={(e) => {
                       e.preventDefault()
                       setTabIndex(1)
-                      if (tabListRef.current) {
+                      if (tabListRef.current && typeof window !== 'undefined') {
                         // Scroll to the tab list
                         window.scrollTo(0, tabListRef.current.offsetTop)
                       }

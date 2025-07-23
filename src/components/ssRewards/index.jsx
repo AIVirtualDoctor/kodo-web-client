@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useCallback, useEffect, useState } from 'react'
 import RewardsTable from './ssRewardsTable'
 // import RewardsTableNFT from './ssRewardsTableNft'
 import RewardsTableForVe from './ssRewardsTableForVe'
@@ -9,7 +9,6 @@ import { formatCurrency } from '../../utils'
 
 import stores from '../../stores'
 import { ACTIONS } from '../../stores/constants'
-import { ArrowPathIcon } from '@heroicons/react/24/solid'
 
 export default function Rewards() {
   const [, updateState] = useState()
@@ -35,10 +34,12 @@ export default function Rewards() {
     setVestNFTs(nfts)
     setVeToken(stores.stableSwapStore.getStore('veToken'))
 
-    window.setTimeout(() => {
-      stores.dispatcher.dispatch({ type: ACTIONS.GET_REWARD_BALANCES_ALL, content: {} })
-      // stores.dispatcher.dispatch({ type: ACTIONS.GET_VEST_VOTES_ALL, content: { nfts } })
-    })
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        stores.dispatcher.dispatch({ type: ACTIONS.GET_REWARD_BALANCES_ALL, content: {} })
+        // stores.dispatcher.dispatch({ type: ACTIONS.GET_VEST_VOTES_ALL, content: { nfts } })
+      })
+    }
 
     forceUpdate()
   }

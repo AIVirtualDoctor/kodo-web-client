@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import '../styles/global.css'
 
-import PropTypes from 'prop-types'
 import Head from 'next/head'
-import Layout from '../components/layout'
 import { useRouter } from 'next/router'
+import PropTypes from 'prop-types'
+import Layout from '../components/layout'
 
 import darkTheme from '../theme/dark'
 
@@ -18,7 +18,6 @@ import { ACTIONS } from '../stores/constants'
 // import { Web3ReactProvider, useWeb3React } from '@web3-react/core'
 // import { Web3Provider } from '@ethersproject/providers'
 
-import { useWeb3Modal, useWeb3ModalAccount, useWeb3ModalProvider } from '@web3modal/ethers/react'
 import { Web3Modal } from '../context/web3modal'
 
 export default function MyApp({ Component, pageProps }) {
@@ -36,9 +35,11 @@ export default function MyApp({ Component, pageProps }) {
 
   useEffect(() => {
     // Remove the server-side injected CSS.
-    const jssStyles = document.querySelector('#jss-server-side')
-    if (jssStyles) {
-      jssStyles.parentElement.removeChild(jssStyles)
+    if (typeof window !== 'undefined') {
+      const jssStyles = document.querySelector('#jss-server-side')
+      if (jssStyles) {
+        jssStyles.parentElement.removeChild(jssStyles)
+      }
     }
   }, [])
 
@@ -88,8 +89,10 @@ export default function MyApp({ Component, pageProps }) {
   }
 
   useEffect(function () {
-    const localStorageDarkMode = window.localStorage.getItem('yearn.finance-dark-mode')
-    changeTheme(localStorageDarkMode ? localStorageDarkMode === 'dark' : false)
+    if (typeof window !== 'undefined') {
+      const localStorageDarkMode = window.localStorage.getItem('yearn.finance-dark-mode')
+      changeTheme(localStorageDarkMode ? localStorageDarkMode === 'dark' : false)
+    }
   }, [])
 
   useEffect(function () {

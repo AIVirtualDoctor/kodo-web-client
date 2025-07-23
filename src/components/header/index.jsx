@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react'
 
-import { SvgIcon, Badge, Menu, MenuItem } from '@material-ui/core'
-import { withStyles, withTheme } from '@material-ui/core/styles'
+import { withTheme } from '@material-ui/core/styles'
 
 import Navigation from '../navigation'
 
@@ -65,8 +64,10 @@ function Header(props) {
   }
 
   useEffect(function () {
-    const localStorageDarkMode = window.localStorage.getItem('yearn.finance-dark-mode')
-    setDarkMode(localStorageDarkMode ? localStorageDarkMode === 'dark' : false)
+    if (typeof window !== 'undefined') {
+      const localStorageDarkMode = window.localStorage.getItem('yearn.finance-dark-mode')
+      setDarkMode(localStorageDarkMode ? localStorageDarkMode === 'dark' : false)
+    }
   }, [])
 
   const navigate = (url) => {
@@ -82,10 +83,12 @@ function Header(props) {
     // let hexChain = '0x' + Number(process.env.NEXT_PUBLIC_CHAINID).toString(16)
     let hexChain = process.env.NEXT_PUBLIC_CHAINID
     try {
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: hexChain }],
-      })
+      if (typeof window !== 'undefined' && window.ethereum) {
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: hexChain }],
+        })
+      }
     } catch (switchError) {
       console.log('switch error', switchError)
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { NumericFormat } from 'react-number-format'
 
 // This is used to fill in the range to be filtered
@@ -14,23 +14,27 @@ const FilterInputs = ({
   minIncomePerVote,
   setMinIncomePerVote,
 }) => {
-  const [isMd, setIsMd] = useState(window.matchMedia('(min-width: 768px)').matches)
+  const [isMd, setIsMd] = useState(false)
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(min-width: 768px)')
-    const listener = (e) => setIsMd(e.matches)
+    if (typeof window !== 'undefined') {
+      const mediaQuery = window.matchMedia('(min-width: 768px)')
+      setIsMd(mediaQuery.matches)
 
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', listener)
-    } else {
-      mediaQuery.addListener(listener)
-    }
+      const listener = (e) => setIsMd(e.matches)
 
-    return () => {
-      if (mediaQuery.removeEventListener) {
-        mediaQuery.removeEventListener('change', listener)
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', listener)
       } else {
-        mediaQuery.removeListener(listener)
+        mediaQuery.addListener(listener)
+      }
+
+      return () => {
+        if (mediaQuery.removeEventListener) {
+          mediaQuery.removeEventListener('change', listener)
+        } else {
+          mediaQuery.removeListener(listener)
+        }
       }
     }
   }, [])

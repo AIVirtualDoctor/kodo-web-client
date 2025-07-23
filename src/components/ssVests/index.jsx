@@ -1,6 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
-
-import classes from './ssVests.module.css'
+import { useCallback, useEffect, useState } from 'react'
 
 import VestsTable from './ssVestsTable'
 
@@ -37,9 +35,11 @@ export default function Vests() {
       forceUpdate()
     }
 
-    window.setTimeout(() => {
-      stores.dispatcher.dispatch({ type: ACTIONS.GET_VEST_NFTS, content: {} })
-    }, 1)
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => {
+        stores.dispatcher.dispatch({ type: ACTIONS.GET_VEST_NFTS, content: {} })
+      }, 1)
+    }
 
     stores.emitter.on(ACTIONS.VEST_NFTS_RETURNED, vestNFTsReturned)
     return () => {
