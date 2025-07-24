@@ -35,6 +35,11 @@ export function formatCurrency(amount, decimals = 2, largeNumberFormat = false) 
       }
     }
 
+    // Handle very large numbers that might overflow toNumber()
+    if (bnAmount.gt(Number.MAX_SAFE_INTEGER)) {
+      return bnAmount.toFixed(decimals)
+    }
+    
     const formatter = new Intl.NumberFormat(undefined, {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
@@ -42,7 +47,7 @@ export function formatCurrency(amount, decimals = 2, largeNumberFormat = false) 
 
     return formatter.format(bnAmount.toNumber())
   } else {
-    return 0
+    return '0.00'
   }
 }
 

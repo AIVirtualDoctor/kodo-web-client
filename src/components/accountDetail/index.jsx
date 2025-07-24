@@ -26,9 +26,12 @@ function AccountDetail({ isAccountDetailChecked, setIsAccountDetailChecked }) {
   useEffect(() => {
     const ssUpdated = async () => {
       const baseAssets = stores.stableSwapStore.getStore('baseAssets')
+      console.log('AccountDetail - baseAssets:', baseAssets)
       const filteredAssets = baseAssets.filter((asset) => asset.address === 'ETH')
+      console.log('AccountDetail - ETH token found:', filteredAssets)
 
       if (filteredAssets.length > 0) {
+        console.log('AccountDetail - Setting ETH token with balance:', filteredAssets[0].balance)
         setEthToken(filteredAssets[0])
       }
     }
@@ -104,7 +107,15 @@ function AccountDetail({ isAccountDetailChecked, setIsAccountDetailChecked }) {
               </div>
               <div className="flex flex-col text-center mt-1">
                 <div className="text-xs text-text-gray font-normal flex flex-row items-center">
-                  {ethToken?.balance ? `${formatCurrency(ethToken.balance, 4)} ETH` : '0.00 ETH'}
+                  {(() => {
+                    console.log('AccountDetail - Rendering ETH balance:', ethToken?.balance)
+                    if (ethToken?.balance) {
+                      const formatted = formatCurrency(ethToken.balance, 4)
+                      console.log('AccountDetail - Formatted balance:', formatted)
+                      return `${formatted} ETH`
+                    }
+                    return '0.00 ETH'
+                  })()}
                 </div>
               </div>
               <div className="w-full grid grid-cols-2 text-sm justify-between mt-5 gap-3">

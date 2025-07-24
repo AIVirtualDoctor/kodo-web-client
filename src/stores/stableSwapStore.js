@@ -411,7 +411,7 @@ class Store {
         })
         const pairsCall = await response.json()
 
-        let thePair = pairsCall.data.filter((pair) => {
+        let thePair = pairsCall.data?.filter((pair) => {
           return pair.address.toLowerCase() == pairAddress.toLowerCase()
         })
 
@@ -698,13 +698,16 @@ class Store {
 
   _getBaseAssets = async () => {
     try {
+      console.log('=== Fetching baseAssets from:', `${process.env.NEXT_PUBLIC_API}/api/v1/baseAssets`)
       const response = await fetch(`${process.env.NEXT_PUBLIC_API}/api/v1/baseAssets`, {
         method: 'get',
         // headers: {
         //   Authorization: `Basic ${process.env.NEXT_PUBLIC_API_TOKEN}`,
         // },
       })
+      console.log('API response status:', response.status)
       const baseAssetsCall = await response.json()
+      console.log('Base assets API response:', baseAssetsCall)
 
       // const baseAssetsCall = baseAssetsData // TODO: remove this line
 
@@ -799,7 +802,7 @@ class Store {
   getBalances = async (payload) => {
     try {
       const account = stores.accountStore.getStore('account')
-      // console.log('getBalances ==', account)
+      console.log('=== getBalances START ===', account)
       // if (!account) {
       //   console.warn('account not found')
       //   return null
@@ -810,11 +813,15 @@ class Store {
         console.warn('web3 not found')
         return null
       }
+      console.log('web3 provider obtained:', web3)
 
       if (account && account.address) {
+        console.log('Fetching gov token info for:', account.address)
         this._getGovTokenInfo(web3, account)
       }
+      console.log('Fetching base asset info...')
       await this._getBaseAssetInfo(web3, account)
+      console.log('Fetching pairs info...')
       await this._getPairsInfo(web3, account)
     } catch (ex) {
       console.log(ex)
@@ -1150,21 +1157,56 @@ class Store {
       const start = moment()
 
       const baseAssets = this.getStore('baseAssets')
+      console.log('=== _getBaseAssetInfo ===', {
+        baseAssetsCount: baseAssets?.length,
+        account: account?.address,
+        baseAssets: baseAssets,
+      })
       if (!baseAssets) {
         console.warn('baseAssets not found')
         return null
       }
 
       const balanceOfs = await this._tryGetBalanceOfs(web3, baseAssets, account)
-      const whitelists = await this._tryGetWhitelists(web3, baseAssets)
+      console.log('Balance results from multicall:', balanceOfs)
+      console.log('baseAssets before formatting:', baseAssets)
+
+      let whitelists = []
+      try {
+        whitelists = await this._tryGetWhitelists(web3, baseAssets)
+        console.log('whitelists:', whitelists)
+      } catch (err) {
+        console.error('Error fetching whitelists, using default:', err)
+        // Default all to false if whitelist fetch fails
+        whitelists = baseAssets.map(() => false)
+      }
 
       for (let i = 0; i < baseAssets.length; i++) {
-        baseAssets[i].balance = BigNumber(balanceOfs[i])
-          .div(10 ** baseAssets[i].decimals)
-          .toFixed(baseAssets[i].decimals)
-        baseAssets[i].value = BigNumber(baseAssets[i].balance).times(baseAssets[i].price || 0)
-        baseAssets[i].isWhitelisted = whitelists[i]
+        try {
+          const rawBalance = balanceOfs[i]
+          const bnRaw = BigNumber(rawBalance)
+          const divisor = BigNumber(10).pow(baseAssets[i].decimals)
+          const bnFormatted = bnRaw.div(divisor)
+          const formattedBalance = bnFormatted.toFixed(baseAssets[i].decimals)
+
+          console.log(
+            `${
+              baseAssets[i].symbol
+            }: raw=${rawBalance}, bnFormatted=${bnFormatted.toString()}, formatted=${formattedBalance}, decimals=${
+              baseAssets[i].decimals
+            }`
+          )
+
+          baseAssets[i].balance = formattedBalance
+          baseAssets[i].value = BigNumber(baseAssets[i].balance).times(baseAssets[i].price || 0)
+          baseAssets[i].isWhitelisted = whitelists[i]
+        } catch (err) {
+          console.error(`Error formatting balance for ${baseAssets[i].symbol}:`, err)
+          baseAssets[i].balance = '0'
+          baseAssets[i].value = BigNumber(0)
+        }
       }
+      console.log('Final baseAssets with balances:', baseAssets)
 
       const end = moment()
       const time = end.diff(start)
@@ -1195,17 +1237,36 @@ class Store {
 
   _getBalanceOfs = async (web3, multicall, baseAssets, account) => {
     try {
+      console.log('=== _getBalanceOfs ===', {
+        hasAccount: !!account?.address,
+        baseAssetsCount: baseAssets.length,
+        multicall: !!multicall,
+      })
       if (account && account.address) {
-        const balanceOfCalls = baseAssets.map((asset) => {
-          if (asset.address === 'ETH') {
-            return multicall.getEthBalance(account.address)
-          }
+        // Fallback: fetch balances individually if multicall fails
+        const balancePromises = baseAssets.map(async (asset) => {
+          try {
+            if (asset.address === 'ETH') {
+              console.log('Getting ETH balance for:', account.address)
+              const ethBalance = await web3.eth.getBalance(account.address)
+              console.log('ETH balance:', ethBalance)
+              return ethBalance
+            }
 
-          const assetContract = new web3.eth.Contract(CONTRACTS.ERC20_ABI, asset.address)
-          return assetContract.methods.balanceOf(account.address)
+            console.log('Getting token balance for:', asset.symbol, asset.address)
+            const assetContract = new web3.eth.Contract(CONTRACTS.ERC20_ABI, asset.address)
+            const balance = await assetContract.methods.balanceOf(account.address).call()
+            console.log(`${asset.symbol} balance:`, balance)
+            return balance
+          } catch (err) {
+            console.error(`Error fetching balance for ${asset.symbol}:`, err)
+            return '0'
+          }
         })
 
-        return multicall.aggregate(balanceOfCalls)
+        const results = await Promise.all(balancePromises)
+        console.log('Direct balance results:', results)
+        return results
       } else {
         return baseAssets.map((asset) => {
           return '0'
